@@ -29,7 +29,10 @@ x=np.random.randn(1, 20)[0]
 norm = plt.Normalize(np.min(xx),np.max(xx))
 cmap = plt.cm.viridis
 fig, ax = plt.subplots(figsize=(10,8))
-sc = plt.scatter(xx, yy, c=x, cmap=cmap, norm=norm)
+sc = plt.scatter(xx, yy, c=x, cmap=cmap, norm=norm, label='Scatter')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.legend()
 fig.colorbar(sc, label='Random')
 
 annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
@@ -37,30 +40,6 @@ annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
                     arrowprops=dict(arrowstyle="->"))
 
 annot.set_visible(False)
-
-#Credit to ImportanceOfBeingErnest on stackoverflow ( https://stackoverflow.com/questions/7908636/possible-to-make-labels-appear-when-hovering-over-a-point-in-matplotlib )
-def update_annot(ind):
-    pos = sc.get_offsets()[ind["ind"][0]]
-    annot.xy = pos
-    text = "{}".format(" ".join([names[n] for n in ind["ind"]]))
-    annot.set_text(text)
-    annot.get_bbox_patch().set_facecolor(cmap(norm(x[ind["ind"][0]])))
-    annot.get_bbox_patch().set_alpha(0.4)
-
-def click(event):
-    vis = annot.get_visible()
-    if event.inaxes == ax:
-        cont, ind = sc.contains(event)
-        if cont:
-            update_annot(ind)
-            annot.set_visible(True)
-            fig.canvas.draw_idle()
-            print('Pulling up plots: ', files)
-            create_collage(2000,2000, files)
-        else:
-            if vis:
-                annot.set_visible(False)
-                fig.canvas.draw_idle()
 
 def create_collage(width, height, listofimages):
 	#Credit to Hugo on stackoverflow ( https://stackoverflow.com/questions/35438802/making-a-collage-in-pil )
@@ -86,6 +65,35 @@ def create_collage(width, height, listofimages):
         x += thumbnail_width
         y = 0
     new_im.show()
+
+#Credit to ImportanceOfBeingErnest on stackoverflow ( https://stackoverflow.com/questions/7908636/possible-to-make-labels-appear-when-hovering-over-a-point-in-matplotlib )
+def update_annot(ind):
+    pos = sc.get_offsets()[ind["ind"][0]]
+    annot.xy = pos
+    text = "{}".format(" ".join([names[n] for n in ind["ind"]]))
+    annot.set_text(text)
+    annot.get_bbox_patch().set_facecolor(cmap(norm(x[ind["ind"][0]])))
+    annot.get_bbox_patch().set_alpha(0.4)
+
+def click(event):
+    vis = annot.get_visible()
+    if event.inaxes == ax:
+        cont, ind = sc.contains(event)
+        x_pos = float(event.xdata)
+        y_pos = float(event.ydata)
+        print('You clicked at position: ', (round(x_pos, 3), round(y_pos, 3)))
+        if cont:
+            update_annot(ind)
+            annot.set_visible(True)
+            fig.canvas.draw_idle()
+            print('Pulling up plots: ')
+            for i in files:
+                print('\t', i)
+            create_collage(2000,2000, files)
+        else:
+            if vis:
+                annot.set_visible(False)
+                fig.canvas.draw_idle()
 
 fig.canvas.mpl_connect('button_press_event', click)
 plt.show()
